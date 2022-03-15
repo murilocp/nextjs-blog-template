@@ -4,11 +4,22 @@ import { GetStaticProps } from 'next';
 import { createClient } from '../../prismicio';
 
 import SEO from '../components/SEO';
+import { IBlogProps, PrismicBlogPage } from 'types/Blog';
 
-const Home: FC = () => {
+const Home: FC<IBlogProps> = ({ pageContent }) => {
+  if (!pageContent) {
+    return null;
+  }
+
+  console.log(pageContent);
+
   return (
     <div>
-      <SEO title="Home" />
+      <SEO
+        title={pageContent.tituloMeta}
+        description={pageContent.descricaoMeta}
+        image={pageContent.imagemMeta.url}
+      />
 
       <h1>Blog</h1>
     </div>
@@ -20,17 +31,22 @@ export const getStaticProps: GetStaticProps = async context => {
 
   let blogHome = null;
   try {
-    blogHome = await client.getSingle('blog-home');
+    blogHome = await client.getSingle<PrismicBlogPage>('blog-home', {
+      fetchLinks: [
+        'blog-post.titulo',
+        'blog-post.conteudo',
+        'blog-post.imagem',
+      ],
+    });
   } catch {
     // TODO
   }
 
-  const posts = await client.getAllByType('post', {
-    orderings: [{ field: 'my.post.date', direction: 'desc' }],
-  });
+  console.log('blogHome', blogHome);
 
   return {
-    props: { blogHome, posts },
+    props: { pageContent: blogHome.data },
   };
 };
+
 export default Home;
